@@ -1,0 +1,38 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "<Current file>",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd":"${workspaceFolder}",
+            // "env": {"PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/src:${env:PYTHONPATH}"}
+        },
+        {
+            "name": "udp-mux",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/msu_ssc/udp-mux.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd":"${workspaceFolder}",
+            // "env": {"PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/src:${env:PYTHONPATH}"},
+            "args": [
+                // "--receive",
+                "127.0.0.1:8002",
+                "--transmit",
+                "127.0.0.1:8005",
+                "127.0.0.1:8006",
+                "--reuse-socket",
+                "--log-level",
+                "DEBUG",
+            ]
+        }
+    ]
+}
