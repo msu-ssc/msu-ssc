@@ -15,6 +15,10 @@ pretty = [
 dev = [
     "ruff>=0.9.2",
 ]
+ait = [
+    "ait-core",
+    "ait-dsn",
+]
 
 [tool.ruff]
 line-length = 120
@@ -23,3 +27,7 @@ line-length = 120
 ignore = [
     "F541", # f-string without any placeholders
 ]
+
+[tool.uv.sources]
+ait-core = { git = "https://github.com/NASA-AMMOS/AIT-Core", rev = "2.5.2" }
+ait-dsn = { git = "https://github.com/NASA-AMMOS/AIT-DSN", rev = "46c5a670811a9514d4d01cb13a96c3e93eee1684" }
