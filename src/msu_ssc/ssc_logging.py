@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 
 try:
     from rich import logging as rich_logging
+
     _rich_available = True
 except ImportError:
     _rich_available = False
@@ -75,7 +76,10 @@ def create_logger(
     return logger
 
 
-ssc_root_logger = create_logger("ssc_root", level="DEBUG",)
+ssc_root_logger = create_logger(
+    "ssc_root",
+    level="DEBUG",
+)
 
 debug = ssc_root_logger.debug
 info = ssc_root_logger.info

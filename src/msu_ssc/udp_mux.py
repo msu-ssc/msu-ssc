@@ -11,9 +11,11 @@ logger = create_logger(__file__, level="DEBUG")
 def _tup_to_str(socket_tuple: tuple[str, int]) -> str:
     return f"{socket_tuple[0]}:{socket_tuple[1]}"
 
+
 def _str_to_tup(socket_str: str) -> tuple[str, int]:
     host_str, port_str = socket_str.strip().split(":")
     return (host_str, int(port_str))
+
 
 def _shutdown_socket(sock: socket.socket):
     try:
@@ -176,11 +178,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     receive_socket_tuple = _str_to_tup(args.receive)
-    transmit_socket_tuples = [
-        _str_to_tup(sock_str)
-        for sock_str
-        in args.transmit
-    ]
+    transmit_socket_tuples = [_str_to_tup(sock_str) for sock_str in args.transmit]
     logger.debug(f"Parsed command line arguments: {args=}")
     logger.debug(f"Parsed receive UDP socket: {receive_socket_tuple=}")
     logger.debug(f"Parsed transmit UCP socket(s): {transmit_socket_tuples=}")
@@ -193,6 +191,7 @@ def main() -> int:
         log_level=args.log_level,
     ) as mux:  # noqa: F841
         import time
+
         time.sleep(5)
         pass
 
@@ -201,6 +200,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())
 
 # receive_socket_tuple = ("127.0.0.1", 8002)
