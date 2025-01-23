@@ -1,7 +1,7 @@
 import datetime
 import socket
 import threading
-from typing import Callable
+from typing import Callable, Type, TypeAlias
 from msu_ssc.ssc_logging import create_logger
 from msu_ssc.time_util import utc
 from msu_ssc.udp_mux import _shutdown_socket, _str_to_tup, _tup_to_str
@@ -10,17 +10,21 @@ from msu_ssc.udp_mux import _shutdown_socket, _str_to_tup, _tup_to_str
 logger = create_logger(__file__, level="DEBUG")
 
 
+IPv4SockTup: TypeAlias = tuple[str, int]
+
+
 class OneWayUdpProxyThread(threading.Thread):
     def __init__(
         self,
         *,
-        source_tup: tuple[str, int],
-        destination_tup: tuple[str, int],
+        source_tup: IPv4SockTup,
+        destination_tup: IPv4SockTup,
+        proxy_tup: IPv4SockTup,
         daemon: bool = True,
         name: str = "proxy",
         **kwargs,
     ):
-        name += f"({_tup_to_str(source_tup)}->{_tup_to_str(destination_tup)})"
+        name += f"({_tup_to_str(proxy_tup)}->{_tup_to_str(destination_tup)})"
 
         super().__init__(
             name=name,
@@ -29,7 +33,8 @@ class OneWayUdpProxyThread(threading.Thread):
         )
         self.source_tup = source_tup
         self.destination_tup = destination_tup
-        self.source_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.proxy_tup = proxy_tup
+        self.proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.total_packets = 0
         self.total_bytes = 0
@@ -38,13 +43,11 @@ class OneWayUdpProxyThread(threading.Thread):
 
     def run(self):
         # BIND
-        _shutdown_socket(self.source_socket)
-        self.source_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        logger.info(
-            f"Attempting to bind to UDP socket {_tup_to_str(self.source_tup)} for receiving. [{self.name}]"
-        )
-        self.source_socket.bind(self.source_tup)
-        logger.info(f"Successfully bound receiving socket. [{self.name}]")
+        logger.info(f"Attempting to bind to UDP socket {_tup_to_str(self.proxy_tup)} for receiving. [{self.name}]")
+        _shutdown_socket(self.proxy_socket)
+        self.proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.proxy_socket.bind(self.proxy_tup)
+        logger.info(f"Successfully bound receiving socket {_tup_to_str(self.proxy_tup)}. [{self.name}]")
 
         # SERVE FOREVER
         self._mux_start_time = utc()
@@ -52,192 +55,120 @@ class OneWayUdpProxyThread(threading.Thread):
             f"Ready to begin proxying at {self._mux_start_time.isoformat(timespec='seconds', sep=' ')}. [{self.name}]"
         )
         while True:
-            data, source_address = self.source_socket.recvfrom(4096)
-            self.route_packet(
+            data, source_address = self.proxy_socket.recvfrom(4096)
+            # logger.info(f"{source_address=} {source_address==self.source_tup=} {source_address==self.destination_tup=}")
+            self._receive_packet(
                 data=data,
+                source_address=source_address,
             )
 
-    def route_packet(
+    def handle_packet(
         self,
         *,
         data: bytes,
+        destination_tup: IPv4SockTup,
         **kwargs,
+    ):
+        """Overload this one."""
+        logger.debug(f"sending {len(data)} to {_tup_to_str(destination_tup)} [{self.name}]")
+        self.proxy_socket.sendto(data, destination_tup)
+
+    def _receive_packet(
+        self,
+        *,
+        data: bytes,
+        source_address: IPv4SockTup | None = None,
+        debug: bool = True,
     ) -> None:
-        """Route a given packet to the destination (or modify it, or whatever). Default behavior is to
-        simply forward the packet and log a message.
+        if debug:
+            message = f"Received {len(data)} bytes"
+            if source_address:
+                message += f" from {_tup_to_str(source_address)}."
+            else:
+                message += "."
+            message += f" (total: {self.total_packets} packets; {self.total_bytes} bytes) "
+            message += f"[{self.name}]"
+            logger.debug(message)
 
-        Child classes should override this class to change proxying functionality. This method is always called
-        with keyword-only arguments."""
-        logger.debug(
-            f"Received {len(data)} bytes. Forwarding to {self.destination_tup} [{self.name}]"
+        self.handle_packet(
+            data=data,
+            destination_tup=self.destination_tup,
         )
-        sent_bytes = self.source_socket.sendto(data, self.destination_tup)
-
-        self.total_bytes += sent_bytes
+        self.total_bytes += len(data)
         self.total_packets += 1
 
 
 class BidirectionalUdpProxy:
+    thread_class: Type[OneWayUdpProxyThread] = OneWayUdpProxyThread
+
     def __init__(
         self,
         *,
         server_tup: tuple[str, int],
         client_tup: tuple[str, int],
+        server_proxy_tup: tuple[str, int],
+        client_proxy_tup: tuple[str, int],
     ):
         self.server_tup = server_tup
         self.client_tup = client_tup
+        self.server_proxy_tup = server_proxy_tup
+        self.client_proxy_tup = client_proxy_tup
 
-        self.server_proxy = OneWayUdpProxyThread(
+        self.server_to_client = self.__class__.thread_class(
             daemon=True,
-            source_tup=server_tup,
-            destination_tup=client_tup,
-            name="server_proxy",
+            source_tup=self.server_tup,
+            destination_tup=self.client_tup,
+            proxy_tup=self.client_proxy_tup,
+            name="server_to_client",
         )
-        self.client_proxy = OneWayUdpProxyThread(
+        self.client_to_server = self.__class__.thread_class(
             daemon=True,
-            source_tup=client_tup,
-            destination_tup=server_tup,
-            name="client_proxy",
+            source_tup=self.client_tup,
+            destination_tup=self.server_tup,
+            proxy_tup=self.server_proxy_tup,
+            name="client_to_server",
         )
 
-        self.server_proxy.start()
-        self.client_proxy.start()
+        self.server_to_client.start()
+        self.client_to_server.start()
+
+        logger.debug(f"{self.server_to_client=} {type(self.server_to_client)=}")
+        logger.debug(f"{self.client_to_server=} {type(self.client_to_server)=}")
 
     def __repr__(self):
         return f"{self.__class__.__name__}({_tup_to_str(self.server_tup)}<->{_tup_to_str(self.client_tup)})"
+
+
+class OneWayUdpProxyThreadFailure(OneWayUdpProxyThread):
+    """A proxy thread where every other packet will die"""
+
+    def handle_packet(self, *, data: bytes, destination_tup: IPv4SockTup, **kwargs):
+        if self.total_packets % 2 == 0:
+            logger.info(f"INTENTIONAL FAILURE. packet index: {self.total_packets} [{self.name}]")
+        else:
+            logger.debug(f"Sending packet normally [{self.name}]")
+            self.proxy_socket.sendto(data, destination_tup)
+
+
+class BidirectionalUdpProxyFailure(BidirectionalUdpProxy):
+    thread_class = OneWayUdpProxyThreadFailure
 
 
 if __name__ == "__main__":
     import time
     import sys
 
-    proxy = BidirectionalUdpProxy(
-        server_tup=("127.0.0.1", 8002),
-        client_tup=("127.0.0.1", 8003),
+    proxy_class = BidirectionalUdpProxy
+    # proxy_class = BidirectionalUdpProxyFailure
+
+    proxy = proxy_class(
+        server_tup=("127.0.0.1", 8003),
+        client_tup=("127.0.0.1", 8002),
+        server_proxy_tup=("127.0.0.1", 9003),
+        client_proxy_tup=("127.0.0.1", 9002),
     )
     logger.info(proxy)
-
-    # proxy = OneWayUdpProxyThread(
-    #     source_tup=("127.0.0.1", 8002),
-    #     destination_tup=("127.0.0.1", 8007),
-    #     daemon=True,
-    # )
-    # proxy.start()
-    # logger.info(proxy)
     sleep_secs = 1000000
     logger.debug(f"Sleeping {sleep_secs:,} secs")
     time.sleep(sleep_secs)
     logger.warning(f"Done sleeping. Exiting")
-    sys.exit(1)
-
-
-class UdpProxy:
-    def __init__(
-        self,
-        *,
-        server: tuple[str, int],
-        client: tuple[str, int],
-        daemon=True,
-        reuse_server: bool = True,
-        reuse_client: bool = True,
-    ):
-        self.server_sock_tup = server
-        self.client_sock_tup = client
-        self.daemon = daemon
-        self.reuse_server = reuse_server
-        self.reuse_client = reuse_client
-
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-        self._bound = False
-        # self._received_packet_count = 0
-        # self._received_bytes_count = 0
-        # self._transmitted_packet_count = 0
-        # self._transmitted_bytes_count = 0
-
-        self.thread = threading.Thread(
-            name=f"udp-proxy-{_tup_to_str(self.server_sock_tup)}-{_tup_to_str(self.client_sock_tup)}",
-            daemon=self.daemon,
-            target=self.start_proxy,
-        )
-        self.thread.start()
-
-        pass
-
-    pass
-
-    def one_way_proxy_factory(
-        self,
-        source_socket: socket.socket,
-        destination_socket: socket.socket,
-        routing_function: Callable[
-            [
-                bytes,  # data
-                tuple[str, int] | None,  # Source address
-                socket.socket,  # source socket
-                tuple[str, int] | None,  # destination address
-            ],
-            None,
-        ],
-    ) -> Callable[[None], None]:
-        def proxy() -> None:
-            while True:
-                data, source_address = source_socket.recvfrom(4096)
-                routing_function(
-                    data,
-                    source_address,
-                    source_socket,
-                    destination_socket,
-                )
-
-        return proxy
-
-    def route_server_packet(
-        self,
-        payload_data: bytes,
-        receive_socket: socket.socket,
-        transmit_address_tup: tuple[str, int],
-    ) -> None:
-        logger.debug(f"[server] RX {len(payload_data)} bytes")
-        receive_socket.sendto(payload_data, transmit_address_tup)
-
-    def start_proxy(self):
-        logger.info(f"Beginning MUX setup")
-        self.bind()
-
-        server_proxy = self.one_way_proxy_factory(
-            source_socket=self.server_socket,
-            destination_socket=self.client_socket,
-            routing_function=self.route_server_packet,
-        )
-
-        self.server_thread = threading.Thread(
-            target=self.one_way_proxy_factory(self.server_sock_tup)
-        )
-
-        self._proxy_start_time = utc()
-        logger.info(
-            f"Ready to begin proxyinging at {self._proxy_start_time.isoformat(timespec='seconds', sep=' ')}."
-        )
-        while True:
-            data, source_address = self.receive_socket.recvfrom(4096)
-            self.handle_packet(data, source_address)
-        pass
-
-    def bind(self):
-        pass
-
-
-def main():
-    proxy = UdpProxy(
-        server=("127.0.0.1", 9002),
-        client=("127.0.0.1", 9001),
-    )
-    pass
-
-
-if __name__ == "__main__":
-    import sys
-
-    sys.exit(main())
