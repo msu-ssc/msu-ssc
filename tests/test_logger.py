@@ -1,5 +1,4 @@
 import datetime
-import pytest
 
 import freezegun
 

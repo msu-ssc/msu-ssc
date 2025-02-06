@@ -38,3 +38,9 @@ line-length = 120
 ignore = [
     "F541", # f-string without any placeholders
 ]
+extend-select = [
+    "I001",
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true

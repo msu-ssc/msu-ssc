@@ -1,8 +1,8 @@
 import datetime
 import logging
+import sys
 from pathlib import Path
 from typing import Union
-import sys
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -10,7 +10,8 @@ if sys.version_info >= (3, 8):
 else:
     TimespecType = str
 
-from msu_ssc.path_util import clean_path_part, file_timestamp
+from msu_ssc.path_util import clean_path_part
+from msu_ssc.path_util import file_timestamp
 
 try:
     from rich.logging import RichHandler

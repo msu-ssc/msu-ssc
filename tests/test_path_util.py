@@ -1,8 +1,6 @@
 import datetime
-import freezegun
-import pytest
-from msu_ssc import ssc_log
 
+from msu_ssc import ssc_log
 
 timestamp_utc = datetime.datetime(2025, 1, 2, 3, 45, 56, 123456, tzinfo=datetime.timezone.utc)
 timestamp_naive = datetime.datetime(2025, 1, 2, 3, 45, 56, 123456)
@@ -50,4 +48,4 @@ def test_utc_filename_timestamp():
 
 if __name__ == "__main__":
     # pytest.main([__file__])
-    import freezegun
+    pass

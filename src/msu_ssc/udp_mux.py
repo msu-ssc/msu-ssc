@@ -1,7 +1,9 @@
 import datetime
 import socket
 import threading
-from typing import Iterable, Tuple, Union
+from typing import Iterable
+from typing import Tuple
+from typing import Union
 
 from msu_ssc import ssc_log
 

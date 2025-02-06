@@ -1,13 +1,14 @@
 import socket
 import threading
-from typing import Tuple, Type, TypeAlias, Union
-
-from msu_ssc.time_util import utc
-from msu_ssc.udp_mux import _shutdown_socket, _tup_to_str
+from typing import Tuple
+from typing import Type
+from typing import TypeAlias
+from typing import Union
 
 from msu_ssc import ssc_log
-
-
+from msu_ssc.time_util import utc
+from msu_ssc.udp_mux import _shutdown_socket
+from msu_ssc.udp_mux import _tup_to_str
 
 IPv4SockTup: TypeAlias = Tuple[str, int]
 

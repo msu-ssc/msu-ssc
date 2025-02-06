@@ -1,7 +1,7 @@
 import datetime
 import re
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Union
 
 if sys.version_info >= (3, 8):
