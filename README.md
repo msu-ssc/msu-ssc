@@ -16,3 +16,12 @@ In particular, this uses the `src` layout, with all the code being in `./src/msu
 These tools are largely written by [David Mayo](https://github.com/davidmayo), starting in January 2025.
 
 Some of this code dates back many years ago, written by many different Space Science Center personnel over the years, with no git history to speak of.
+
+
+## Release notes
+
+### 0.1.0 - 2025-02-05
+Initial release
+
+### 0.1.1 - 2025-02-05
+Add ssc_logging module

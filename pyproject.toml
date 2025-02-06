@@ -1,10 +1,20 @@
 [project]
 name = "msu-ssc"
-version = "0.1.0"
+dynamic = ["version"]
+# version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm.version]
+source = "scm"
+fallback_version = "0.55.55"
 
 [project.optional-dependencies]
 pretty = [
@@ -13,6 +23,7 @@ pretty = [
 
 [dependency-groups]
 dev = [
+    "pytest>=8.3.4",
     "ruff>=0.9.2",
 ]
 ait = [
