@@ -1,10 +1,10 @@
 import socket
 import threading
 from typing import Type, TypeAlias
+
 from msu_ssc.ssc_logging import create_logger
 from msu_ssc.time_util import utc
 from msu_ssc.udp_mux import _shutdown_socket, _tup_to_str
-
 
 logger = create_logger(__file__, level="DEBUG")
 

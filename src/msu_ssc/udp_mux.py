@@ -2,8 +2,8 @@ import datetime
 import socket
 import threading
 from typing import Iterable
-from msu_ssc.ssc_logging import create_logger
 
+from msu_ssc.ssc_logging import create_logger
 
 logger = create_logger(__file__, level="DEBUG")
 
@@ -59,9 +59,7 @@ class UdpMux:
         logger.info(f"Beginning MUX setup")
         self.bind()
         self._mux_start_time = datetime.datetime.now(tz=datetime.timezone.utc)
-        logger.info(
-            f"Ready to begin muxing at {self._mux_start_time.isoformat(timespec='seconds', sep=' ')}."
-        )
+        logger.info(f"Ready to begin muxing at {self._mux_start_time.isoformat(timespec='seconds', sep=' ')}.")
         while True:
             data, source_address = self.receive_socket.recvfrom(4096)
             self.handle_packet(data, source_address)
@@ -87,9 +85,7 @@ class UdpMux:
         # RECEIVE
         _shutdown_socket(self.receive_socket)
         self.receive_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        logger.info(
-            f"Attempting to bind to UDP socket {_tup_to_str(self.receive_socket_tuple)} for receiving."
-        )
+        logger.info(f"Attempting to bind to UDP socket {_tup_to_str(self.receive_socket_tuple)} for receiving.")
         self.receive_socket.bind(self.receive_socket_tuple)
         logger.info(f"Successfully bound receiving socket.")
 
@@ -102,9 +98,7 @@ class UdpMux:
             self.transmit_socket = self.receive_socket
         else:
             send_socket_tuple = self.transmit_socket_tuples[0]
-            logger.info(
-                f"Attempting to bind to UDP socket {_tup_to_str(send_socket_tuple)} for transmitting."
-            )
+            logger.info(f"Attempting to bind to UDP socket {_tup_to_str(send_socket_tuple)} for transmitting.")
             self.receive_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             logger.info(f"Successfully bound transmitting socket.")
         self._bound = True
@@ -112,17 +106,11 @@ class UdpMux:
     def handle_packet(self, payload_data: bytes, source_address=None) -> None:
         self._received_packet_count += 1
         self._received_bytes_count += len(payload_data)
-        logger.debug(
-            f"Received {len(payload_data):,} bytes from {_tup_to_str(source_address)}"
-        )
+        logger.debug(f"Received {len(payload_data):,} bytes from {_tup_to_str(source_address)}")
         for transmit_socket_tuple in self.transmit_socket_tuples:
             attempted_transmitted_data_size = len(payload_data)
-            logger.debug(
-                f"  Sending {attempted_transmitted_data_size:,} bytes to {_tup_to_str(transmit_socket_tuple)}"
-            )
-            actual_transmitted_data_size = self.transmit_socket.sendto(
-                payload_data, transmit_socket_tuple
-            )
+            logger.debug(f"  Sending {attempted_transmitted_data_size:,} bytes to {_tup_to_str(transmit_socket_tuple)}")
+            actual_transmitted_data_size = self.transmit_socket.sendto(payload_data, transmit_socket_tuple)
             if actual_transmitted_data_size != attempted_transmitted_data_size:
                 logger.error(
                     (
