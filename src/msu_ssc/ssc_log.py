@@ -166,13 +166,11 @@ def _log_to_jsonl_file(
             "args",
             "levelno",
         ),
-        # datefmt="%Y-%m-%dT%H:%M:%S",
-        # format_str="%(asctime)s.%(msecs)03d %(levelname)s %(message)s",
     )
     logger.warning(f"{json_formatter.datefmt=}")
     file_handler.setFormatter(json_formatter)
     logger.addHandler(file_handler)
-    logger.debug(f"Begin logging to {resolved_path.__fspath__()!r}", extra={"fullname": {"david": "mayo"}})
+    logger.debug(f"Begin logging to {resolved_path.__fspath__()!r}")
 
 
 def getChild(name):
