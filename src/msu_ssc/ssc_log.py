@@ -1,7 +1,14 @@
 import datetime
 import logging
 from pathlib import Path
-from typing import Literal, Union
+from typing import Union
+import sys
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+    TimespecType = Literal["auto","hours","minutes","seconds","milliseconds","microseconds"]
+else:
+    TimespecType = str
 
 from msu_ssc.path_util import clean_path_part, file_timestamp
 
@@ -21,14 +28,7 @@ def utc_filename_timestamp(
     prefix: str = "",
     suffix: str = "",
     extension: str = ".log",
-    timespec: Literal[
-        "auto",
-        "hours",
-        "minutes",
-        "seconds",
-        "milliseconds",
-        "microseconds",
-    ] = "seconds",
+    timespec: TimespecType = "seconds",
     assume_utc=False,
     assume_local=False,
 ) -> str:
@@ -145,7 +145,8 @@ def _log_to_jsonl_file(
 ) -> None:
     """Begin logging to the given file. File will be APPENDED, and encoded in UTF-8"""
     try:
-        from pythonjsonlogger.json import JsonFormatter
+        from pythonjsonlogger.jsonlogger import JsonFormatter
+        # from pythonjsonlogger.json import JsonFormatter
     except ImportError:
         logger.error("pythonjsonlogger is not installed. Please install it to use JSON logging.")
         return
@@ -167,7 +168,6 @@ def _log_to_jsonl_file(
             "levelno",
         ),
     )
-    logger.warning(f"{json_formatter.datefmt=}")
     file_handler.setFormatter(json_formatter)
     logger.addHandler(file_handler)
     logger.debug(f"Begin logging to {resolved_path.__fspath__()!r}")

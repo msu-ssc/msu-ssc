@@ -1,8 +1,18 @@
 import datetime
 import re
 from pathlib import Path
-from typing import Literal, Union
+import sys
+from typing import Union
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+
+    TimespecType = Literal[
+        "auto", "hours", "minutes", "seconds", "milliseconds", "microseconds"
+    ]
+else:
+    TimespecType = str
+    
 _chunk_regex = re.compile(r"[^a-zA-Z0-9\-_\.]+")
 
 
@@ -22,14 +32,7 @@ def file_timestamp(
     timestamp: Union[datetime.datetime, None] = None,
     *,
     sep="T",
-    timespec: Literal[
-        "auto",
-        "hours",
-        "minutes",
-        "seconds",
-        "milliseconds",
-        "microseconds",
-    ] = "seconds",
+    timespec: TimespecType = "seconds",
     assume_utc=False,
     assume_local=False,
     desired_tz: Union[datetime.tzinfo, None] = None,
@@ -63,7 +66,9 @@ def file_timestamp(
         if assume_utc and assume_local:
             raise ValueError("Cannot assume both UTC and local time")
         elif not assume_utc and not assume_local:
-            raise ValueError("Must assume either UTC or local time if timestamp is naive")
+            raise ValueError(
+                "Must assume either UTC or local time if timestamp is naive"
+            )
         if assume_utc:
             timestamp = timestamp.replace(tzinfo=datetime.timezone.utc)
         elif assume_local:
@@ -87,9 +92,9 @@ if __name__ == "__main__":
     ]
 
     for string in strings:
-        print(f"{string=}")
-        print(f"{clean_path_part(string)=}")
-        print(f"{_is_valid_path_chunk(string)=}")
+        print(f"string={string!r}")
+        print(f"clean_path_part(string)={clean_path_part(string)!r}")
+        print(f"_is_valid_path_chunk(string)={_is_valid_path_chunk(string)!r}")
         print()
 
     print(clean_path(Path("~/2025-01-02T12:34:56.789012.log")))

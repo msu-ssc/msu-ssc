@@ -169,9 +169,9 @@ def main() -> int:
     args = parser.parse_args()
     receive_socket_tuple = _str_to_tup(args.receive)
     transmit_socket_tuples = [_str_to_tup(sock_str) for sock_str in args.transmit]
-    ssc_log.debug(f"Parsed command line arguments: {args=}")
-    ssc_log.debug(f"Parsed receive UDP socket: {receive_socket_tuple=}")
-    ssc_log.debug(f"Parsed transmit UCP socket(s): {transmit_socket_tuples=}")
+    ssc_log.debug(f"Parsed command line arguments: {args!r}")
+    ssc_log.debug(f"Parsed receive UDP socket: {receive_socket_tuple!r}")
+    ssc_log.debug(f"Parsed transmit UCP socket(s): {transmit_socket_tuples!r}")
 
     with UdpMux(
         receive_socket_tuple=receive_socket_tuple,
@@ -192,44 +192,3 @@ if __name__ == "__main__":
     import sys
 
     sys.exit(main())
-
-# receive_socket_tuple = ("127.0.0.1", 8002)
-# transmit_socket_tuples = [
-#     ("127.0.0.1", 8005),
-#     ("127.0.0.1", 8006),
-# ]
-
-# with UdpMux(
-#     receive_socket_tuple=receive_socket_tuple,
-#     transmit_socket_tuples=transmit_socket_tuples,
-#     reuse_receive_socket=False,
-#     daemon=True,
-# ) as mux:
-#     print(f"{mux=!r}")
-#     print(f"{mux=!s}")
-#     import time
-
-#     sleep = 3000000
-#     print(f"Sleeping {sleep:,} seconds...")
-#     time.sleep(sleep)
-#     print(f"Done sleeping {sleep:,} seconds...")
-
-
-# # recv_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# # send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-# # recv_socket.bind(receive_socket_tuple)
-
-# # print(f"Listening on UDP socket {receive_socket_tuple}")
-# # print(f"Repeating on UDP socket {transmit_socket_tuples}")
-
-# # loop_count = 0
-# # while True:
-# #     print(f"----- {loop_count=} -----")
-# #     loop_count += 1
-# #     data, address = recv_socket.recvfrom(4096)
-# #     print(f"Received {len(data):,} bytes from {address}")
-# #     for transmit_socket_tuple in transmit_socket_tuples:
-# #         print(f"  Sending {len(data):,} bytes to {transmit_socket_tuple}")
-# #         # send_socket.sendto(data, transmit_socket_tuple)
-# #         recv_socket.sendto(data, transmit_socket_tuple)

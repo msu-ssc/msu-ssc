@@ -55,7 +55,6 @@ class OneWayUdpProxyThread(threading.Thread):
         )
         while True:
             data, source_address = self.proxy_socket.recvfrom(4096)
-            # ssc_log.info(f"{source_address=} {source_address==self.source_tup=} {source_address==self.destination_tup=}")
             self._receive_packet(
                 data=data,
                 source_address=source_address,
@@ -131,8 +130,8 @@ class BidirectionalUdpProxy:
         self.server_to_client.start()
         self.client_to_server.start()
 
-        ssc_log.debug(f"{self.server_to_client=} {type(self.server_to_client)=}")
-        ssc_log.debug(f"{self.client_to_server=} {type(self.client_to_server)=}")
+        ssc_log.debug(f"self.server_to_client={self.server_to_client!r} type={type(self.server_to_client)!r}")
+        ssc_log.debug(f"self.client_to_server={self.client_to_server!r} type={type(self.client_to_server)!r}")
 
     def __repr__(self):
         return f"{self.__class__.__name__}({_tup_to_str(self.server_tup)}<->{_tup_to_str(self.client_tup)})"
