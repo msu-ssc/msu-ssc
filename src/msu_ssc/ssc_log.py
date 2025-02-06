@@ -1,9 +1,9 @@
 import datetime
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal, Union
 
-from msu_ssc.path_util import clean_path, clean_path_part, file_timestamp
+from msu_ssc.path_util import clean_path_part, file_timestamp
 
 try:
     from rich.logging import RichHandler
@@ -16,7 +16,7 @@ logger = logging.getLogger("ssc")
 
 
 def utc_filename_timestamp(
-    timestamp: "datetime.datetime | None" = None,
+    timestamp: Union[datetime.datetime, None] = None,
     *,
     prefix: str = "",
     suffix: str = "",
@@ -46,12 +46,12 @@ def utc_filename_timestamp(
 
 
 def init(
-    level: str | None = None,
+    level: Union[str, None] = None,
     *,
-    plain_text_file_path: Path | str | None = None,
-    jsonl_file_path: Path | str | None = None,
-    plain_text_level: str | None = None,
-    jsonl_level: str | None = None,
+    plain_text_file_path: Union[Path, str, None] = None,
+    jsonl_file_path: Union[Path, str, None] = None,
+    plain_text_level: Union[str, None] = None,
+    jsonl_level: Union[str, None] = None,
 ) -> None:
     if level:
         logger.setLevel(level.upper())
@@ -119,8 +119,8 @@ def log_to_default_file() -> None:
 
 
 def _log_to_file(
-    path: Path | str,
-    level: str | None = None,
+    path: Union[Path, str],
+    level: Union[str, None] = None,
 ) -> None:
     """Begin logging in plaintext to the given file. File will be APPENDED, and encoded in UTF-8"""
     resolved_path = Path(path).expanduser().resolve()
@@ -140,8 +140,8 @@ def _log_to_file(
 
 
 def _log_to_jsonl_file(
-    path: Path | str,
-    level: str | None = None,
+    path: Union[Path, str],
+    level: Union[str, None] = None,
 ) -> None:
     """Begin logging to the given file. File will be APPENDED, and encoded in UTF-8"""
     try:

@@ -1,15 +1,15 @@
 import socket
 import threading
-from typing import Type, TypeAlias
+from typing import Tuple, Type, TypeAlias, Union
 
-from msu_ssc.ssc_logging import create_logger
 from msu_ssc.time_util import utc
 from msu_ssc.udp_mux import _shutdown_socket, _tup_to_str
 
-logger = create_logger(__file__, level="DEBUG")
+from msu_ssc import ssc_log
 
 
-IPv4SockTup: TypeAlias = tuple[str, int]
+
+IPv4SockTup: TypeAlias = Tuple[str, int]
 
 
 class OneWayUdpProxyThread(threading.Thread):
@@ -42,20 +42,20 @@ class OneWayUdpProxyThread(threading.Thread):
 
     def run(self):
         # BIND
-        logger.info(f"Attempting to bind to UDP socket {_tup_to_str(self.proxy_tup)} for receiving. [{self.name}]")
+        ssc_log.info(f"Attempting to bind to UDP socket {_tup_to_str(self.proxy_tup)} for receiving. [{self.name}]")
         _shutdown_socket(self.proxy_socket)
         self.proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.proxy_socket.bind(self.proxy_tup)
-        logger.info(f"Successfully bound receiving socket {_tup_to_str(self.proxy_tup)}. [{self.name}]")
+        ssc_log.info(f"Successfully bound receiving socket {_tup_to_str(self.proxy_tup)}. [{self.name}]")
 
         # SERVE FOREVER
         self._mux_start_time = utc()
-        logger.info(
+        ssc_log.info(
             f"Ready to begin proxying at {self._mux_start_time.isoformat(timespec='seconds', sep=' ')}. [{self.name}]"
         )
         while True:
             data, source_address = self.proxy_socket.recvfrom(4096)
-            # logger.info(f"{source_address=} {source_address==self.source_tup=} {source_address==self.destination_tup=}")
+            # ssc_log.info(f"{source_address=} {source_address==self.source_tup=} {source_address==self.destination_tup=}")
             self._receive_packet(
                 data=data,
                 source_address=source_address,
@@ -69,14 +69,14 @@ class OneWayUdpProxyThread(threading.Thread):
         **kwargs,
     ):
         """Overload this one."""
-        logger.debug(f"sending {len(data)} to {_tup_to_str(destination_tup)} [{self.name}]")
+        ssc_log.debug(f"sending {len(data)} to {_tup_to_str(destination_tup)} [{self.name}]")
         self.proxy_socket.sendto(data, destination_tup)
 
     def _receive_packet(
         self,
         *,
         data: bytes,
-        source_address: IPv4SockTup | None = None,
+        source_address: Union[IPv4SockTup, None] = None,
         debug: bool = True,
     ) -> None:
         if debug:
@@ -87,7 +87,7 @@ class OneWayUdpProxyThread(threading.Thread):
                 message += "."
             message += f" (total: {self.total_packets} packets; {self.total_bytes} bytes) "
             message += f"[{self.name}]"
-            logger.debug(message)
+            ssc_log.debug(message)
 
         self.handle_packet(
             data=data,
@@ -103,10 +103,10 @@ class BidirectionalUdpProxy:
     def __init__(
         self,
         *,
-        server_tup: tuple[str, int],
-        client_tup: tuple[str, int],
-        server_proxy_tup: tuple[str, int],
-        client_proxy_tup: tuple[str, int],
+        server_tup: Tuple[str, int],
+        client_tup: Tuple[str, int],
+        server_proxy_tup: Tuple[str, int],
+        client_proxy_tup: Tuple[str, int],
     ):
         self.server_tup = server_tup
         self.client_tup = client_tup
@@ -131,8 +131,8 @@ class BidirectionalUdpProxy:
         self.server_to_client.start()
         self.client_to_server.start()
 
-        logger.debug(f"{self.server_to_client=} {type(self.server_to_client)=}")
-        logger.debug(f"{self.client_to_server=} {type(self.client_to_server)=}")
+        ssc_log.debug(f"{self.server_to_client=} {type(self.server_to_client)=}")
+        ssc_log.debug(f"{self.client_to_server=} {type(self.client_to_server)=}")
 
     def __repr__(self):
         return f"{self.__class__.__name__}({_tup_to_str(self.server_tup)}<->{_tup_to_str(self.client_tup)})"
@@ -143,9 +143,9 @@ class OneWayUdpProxyThreadFailure(OneWayUdpProxyThread):
 
     def handle_packet(self, *, data: bytes, destination_tup: IPv4SockTup, **kwargs):
         if self.total_packets % 2 == 0:
-            logger.info(f"INTENTIONAL FAILURE. packet index: {self.total_packets} [{self.name}]")
+            ssc_log.info(f"INTENTIONAL FAILURE. packet index: {self.total_packets} [{self.name}]")
         else:
-            logger.debug(f"Sending packet normally [{self.name}]")
+            ssc_log.debug(f"Sending packet normally [{self.name}]")
             self.proxy_socket.sendto(data, destination_tup)
 
 
@@ -165,8 +165,8 @@ if __name__ == "__main__":
         server_proxy_tup=("127.0.0.1", 9003),
         client_proxy_tup=("127.0.0.1", 9002),
     )
-    logger.info(proxy)
+    ssc_log.info(proxy)
     sleep_secs = 1000000
-    logger.debug(f"Sleeping {sleep_secs:,} secs")
+    ssc_log.debug(f"Sleeping {sleep_secs:,} secs")
     time.sleep(sleep_secs)
-    logger.warning(f"Done sleeping. Exiting")
+    ssc_log.warning(f"Done sleeping. Exiting")

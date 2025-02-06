@@ -1,7 +1,7 @@
 import datetime
 import re
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Union
 
 _chunk_regex = re.compile(r"[^a-zA-Z0-9\-_\.]+")
 
@@ -19,7 +19,7 @@ def clean_path(path: Path) -> Path:
 
 
 def file_timestamp(
-    timestamp: datetime.datetime | None = None,
+    timestamp: Union[datetime.datetime, None] = None,
     *,
     sep="T",
     timespec: Literal[
@@ -32,7 +32,7 @@ def file_timestamp(
     ] = "seconds",
     assume_utc=False,
     assume_local=False,
-    desired_tz: datetime.tzinfo | None = None,
+    desired_tz: Union[datetime.tzinfo, None] = None,
 ) -> str:
     """
     Convert a timestamp to a string suitable for use in a file name.

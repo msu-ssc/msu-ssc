@@ -1,18 +1,18 @@
 import datetime
 import socket
 import threading
-from typing import Iterable
+from typing import Iterable, Tuple, Union
 
-from msu_ssc.ssc_logging import create_logger
+from msu_ssc import ssc_log
 
-logger = create_logger(__file__, level="DEBUG")
+# logger = create_logger(__file__, level="DEBUG")
 
 
-def _tup_to_str(socket_tuple: tuple[str, int]) -> str:
+def _tup_to_str(socket_tuple: Tuple[str, int]) -> str:
     return f"{socket_tuple[0]}:{socket_tuple[1]}"
 
 
-def _str_to_tup(socket_str: str) -> tuple[str, int]:
+def _str_to_tup(socket_str: str) -> Tuple[str, int]:
     host_str, port_str = socket_str.strip().split(":")
     return (host_str, int(port_str))
 
@@ -21,14 +21,14 @@ def _shutdown_socket(sock: socket.socket):
     try:
         sock.close()
     except Exception as exc:
-        logger.warning(f"Unable to shutdown socket {sock}", exc_info=exc)
+        ssc_log.warning(f"Unable to shutdown socket {sock}", exc_info=exc)
 
 
 class UdpMux:
     def __init__(
         self,
-        receive_socket_tuple: tuple[str, int],
-        transmit_socket_tuples: Iterable[tuple[str, int]] | None = None,
+        receive_socket_tuple: Tuple[str, int],
+        transmit_socket_tuples: Union[Iterable[Tuple[str, int]], None] = None,
         *,
         daemon=True,
         reuse_receive_socket: bool = False,
@@ -56,10 +56,10 @@ class UdpMux:
         self.thread.start()
 
     def start_mux(self) -> None:
-        logger.info(f"Beginning MUX setup")
+        ssc_log.info(f"Beginning MUX setup")
         self.bind()
         self._mux_start_time = datetime.datetime.now(tz=datetime.timezone.utc)
-        logger.info(f"Ready to begin muxing at {self._mux_start_time.isoformat(timespec='seconds', sep=' ')}.")
+        ssc_log.info(f"Ready to begin muxing at {self._mux_start_time.isoformat(timespec='seconds', sep=' ')}.")
         while True:
             data, source_address = self.receive_socket.recvfrom(4096)
             self.handle_packet(data, source_address)
@@ -70,13 +70,13 @@ class UdpMux:
             elapsed = (self._mux_stop_time - self._mux_start_time).total_seconds()
         except Exception:
             elapsed = 0
-        logger.info(
+        ssc_log.info(
             f"Stopping muxing at {self._mux_stop_time.isoformat(timespec='seconds', sep=' ')}. Muxed for {elapsed:.2f} seconds ({elapsed / 3600:.4f} hours)."
         )
         _shutdown_socket(self.receive_socket)
         if self.receive_socket is not self.transmit_socket:
             _shutdown_socket(self.transmit_socket)
-        logger.debug(
+        ssc_log.debug(
             f"Received {self._received_packet_count} packets ({self._received_bytes_count} bytes). "
             + f"Transmitted {self._transmitted_packet_count} packets ({self._transmitted_bytes_count} bytes)."
         )
@@ -85,34 +85,36 @@ class UdpMux:
         # RECEIVE
         _shutdown_socket(self.receive_socket)
         self.receive_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        logger.info(f"Attempting to bind to UDP socket {_tup_to_str(self.receive_socket_tuple)} for receiving.")
+        ssc_log.info(f"Attempting to bind to UDP socket {_tup_to_str(self.receive_socket_tuple)} for receiving.")
         self.receive_socket.bind(self.receive_socket_tuple)
-        logger.info(f"Successfully bound receiving socket.")
+        ssc_log.info(f"Successfully bound receiving socket.")
 
         # TRANSMIT
         _shutdown_socket(self.transmit_socket)
         if self.reuse_receive_socket:
-            logger.debug(
+            ssc_log.debug(
                 f"Reusing receiving UDP socket {_tup_to_str(self.receive_socket_tuple)} as transmitting socket."
             )
             self.transmit_socket = self.receive_socket
         else:
             send_socket_tuple = self.transmit_socket_tuples[0]
-            logger.info(f"Attempting to bind to UDP socket {_tup_to_str(send_socket_tuple)} for transmitting.")
+            ssc_log.info(f"Attempting to bind to UDP socket {_tup_to_str(send_socket_tuple)} for transmitting.")
             self.receive_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            logger.info(f"Successfully bound transmitting socket.")
+            ssc_log.info(f"Successfully bound transmitting socket.")
         self._bound = True
 
     def handle_packet(self, payload_data: bytes, source_address=None) -> None:
         self._received_packet_count += 1
         self._received_bytes_count += len(payload_data)
-        logger.debug(f"Received {len(payload_data):,} bytes from {_tup_to_str(source_address)}")
+        ssc_log.debug(f"Received {len(payload_data):,} bytes from {_tup_to_str(source_address)}")
         for transmit_socket_tuple in self.transmit_socket_tuples:
             attempted_transmitted_data_size = len(payload_data)
-            logger.debug(f"  Sending {attempted_transmitted_data_size:,} bytes to {_tup_to_str(transmit_socket_tuple)}")
+            ssc_log.debug(
+                f"  Sending {attempted_transmitted_data_size:,} bytes to {_tup_to_str(transmit_socket_tuple)}"
+            )
             actual_transmitted_data_size = self.transmit_socket.sendto(payload_data, transmit_socket_tuple)
             if actual_transmitted_data_size != attempted_transmitted_data_size:
-                logger.error(
+                ssc_log.error(
                     (
                         f"Error transmitting packet, originally from {source_address}, to {transmit_socket_tuple}. "
                         + f"Attempted to send {attempted_transmitted_data_size} bytes, actually sent {actual_transmitted_data_size} bytes."
@@ -167,9 +169,9 @@ def main() -> int:
     args = parser.parse_args()
     receive_socket_tuple = _str_to_tup(args.receive)
     transmit_socket_tuples = [_str_to_tup(sock_str) for sock_str in args.transmit]
-    logger.debug(f"Parsed command line arguments: {args=}")
-    logger.debug(f"Parsed receive UDP socket: {receive_socket_tuple=}")
-    logger.debug(f"Parsed transmit UCP socket(s): {transmit_socket_tuples=}")
+    ssc_log.debug(f"Parsed command line arguments: {args=}")
+    ssc_log.debug(f"Parsed receive UDP socket: {receive_socket_tuple=}")
+    ssc_log.debug(f"Parsed transmit UCP socket(s): {transmit_socket_tuples=}")
 
     with UdpMux(
         receive_socket_tuple=receive_socket_tuple,
