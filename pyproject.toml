@@ -20,6 +20,9 @@ fallback_version = "0.55.55"
 pretty = [
     "rich>=13.9.4",
 ]
+logging = [
+    "python-json-logger>=3.2.1",
+]
 
 [dependency-groups]
 dev = [
@@ -29,9 +32,6 @@ dev = [
 ait = [
     "ait-core",
     "ait-dsn",
-]
-logging = [
-    "python-json-logger>=3.2.1",
 ]
 
 [tool.ruff]

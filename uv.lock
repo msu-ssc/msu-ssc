@@ -405,6 +405,9 @@ name = "msu-ssc"
 source = { editable = "." }
 
 [package.optional-dependencies]
+logging = [
+    { name = "python-json-logger" },
+]
 pretty = [
     { name = "rich" },
 ]
@@ -418,12 +421,12 @@ dev = [
     { name = "pytest" },
     { name = "ruff" },
 ]
-logging = [
-    { name = "python-json-logger" },
-]
 
 [package.metadata]
-requires-dist = [{ name = "rich", marker = "extra == 'pretty'", specifier = ">=13.9.4" }]
+requires-dist = [
+    { name = "python-json-logger", marker = "extra == 'logging'", specifier = ">=3.2.1" },
+    { name = "rich", marker = "extra == 'pretty'", specifier = ">=13.9.4" },
+]
 
 [package.metadata.requires-dev]
 ait = [
@@ -434,7 +437,7 @@ dev = [
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "ruff", specifier = ">=0.9.2" },
 ]
-logging = [{ name = "python-json-logger", specifier = ">=3.2.1" }]
+logging = []
 
 [[package]]
 name = "packaging"

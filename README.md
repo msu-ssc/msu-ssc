@@ -28,3 +28,6 @@ Add ssc_logging module
 
 ### 0.2.0 - 2025-02-05
 Overhaul to ssc_log module (Many breaking changes)
+
+### 0.2.1 - 2025-02-05
+Fix bug in optional dependency spec for "logging"
