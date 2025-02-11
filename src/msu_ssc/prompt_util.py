@@ -7,7 +7,7 @@ from typing import TypeVar
 
 _T = TypeVar("_T")
 
-def get_user_choice(
+def get_user_choices(
     choices: List[_T],
     prompt_message: str = f"Choose from the following",
     allow_multiple: bool = True,
@@ -112,7 +112,7 @@ def get_user_choice_single(
     prompt_message: str = f"Choose from the following",
     verify: bool = True,
 ) -> _T:
-    return get_user_choice(
+    return get_user_choices(
         choices=choices,
         prompt_message=prompt_message,
         allow_multiple=False,
@@ -125,5 +125,5 @@ if __name__ == "__main__":
     choices = "AAA BBB CCC DDD EEE".split()
     # choices = [Path(x).resolve().absolute() for x in os.listdir()][:5]
 
-    result = get_user_choice(choices, allow_multiple=True, allow_empty=True, verify=True)
+    result = get_user_choices(choices, allow_multiple=True, allow_empty=True, verify=True)
     print(result)
