@@ -37,3 +37,6 @@ Remove extraneous log messages
 
 ### 0.3.0 - 2025-02-06
 Allow compatibility with Python 3.7 through Python 3.13 
+
+### 0.4.0 - 2025-02-11
+Add `prompt_util` module
