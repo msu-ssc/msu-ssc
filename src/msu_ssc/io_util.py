@@ -1,7 +1,3 @@
-import datetime
-import os
-import shutil
-from pathlib import Path
 from typing import List
 from typing import TypeVar
 
@@ -122,110 +118,9 @@ class IoUtility:
             verify=verify,
         )[0]
 
-    def prepare_for_mayo_scheme(source_directory_path: Path, paths_to_recreate: List[Path] = []) -> None:
-        """WARNING: This will delete the given path!!!
-        Prepare a directory to be archived using "The Mayo Scheme", where archiving is done by initial creation date
-        So ./source_path/ is archived to ./archive_path/2022-09-23T13_13_41/
-        assuming the contents of ./source_path/report_creation_time.txt is 2022-09-23T13_13_41
-
-        Args:
-            source_directory_path (Path): _description_
-        """
-        if source_directory_path.exists():
-            # Delete everything from the current folder
-            # print(f'REMOVING {self.current_base_path.absolute()}')
-            shutil.rmtree(source_directory_path)
-
-        # Re-make the path (that was just deleted)
-        if not source_directory_path.exists():
-            os.mkdir(source_directory_path)
-
-        for path in paths_to_recreate:
-            if not path.exists():
-                os.mkdir(path)
-
-        # Save the report run time
-        current_report_creation_time_path = source_directory_path / "report_creation_time.txt"
-        current_time_string = datetime.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
-        with open(current_report_creation_time_path, "w") as file:
-            file.write(current_time_string)
-
-    def archive_with_mayo_scheme(
-        source_directory_path: Path, archive_directory_path: Path, lead_text: str = "", print_progress: bool = True
-    ) -> None:
-        """Archive using "The Mayo Scheme", where archiving is done by initial creation date
-        So ./source_path/ is archived to ./archive_path/2022-09-23T13_13_41/
-        assuming the contents of ./source_path/report_creation_time.txt is 2022-09-23T13_13_41
-
-        Args:
-            source_directory_path (Path): _description_
-            archive_directory_path (Path): _description_
-        """
-
-        # Get the date in the format 2022-09-23T13_13_41
-        report_creation_path: Path = source_directory_path / "report_creation_time.txt"
-        if report_creation_path.exists():
-            with open(report_creation_path, "r") as file:
-                folder_name = file.readline().strip()
-        else:
-            folder_name = datetime.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
-
-        IoUtility.archive_folder(
-            source_directory_path=source_directory_path,
-            archive_directory_path=archive_directory_path,
-            subdirectory_relative_path=folder_name,
-            lead_text=lead_text,
-            print_progress=print_progress,
-        )
-
-    def archive_folder(
-        source_directory_path: Path,
-        archive_directory_path: Path,
-        subdirectory_relative_path: str = ".",
-        lead_text: str = "",
-        print_progress: bool = True,
-    ) -> None:
-        """Archive a folder recursively
-
-        Args:
-            source_directory_path (Path): _description_
-            archive_directory_path (Path): _description_
-            subdirectory_relative_path (str, optional): _description_. Defaults to '.'.
-            lead_text (str, optional): _description_. Defaults to ''.
-            print_progress (bool, optional): _description_. Defaults to True.
-        """
-        if lead_text != "":
-            lead = f"[{lead_text}] "
-        else:
-            lead = ""
-
-        if not source_directory_path.exists():
-            if print_progress:
-                print(f"{lead}Could not find directory {source_directory_path}")
-                print(f"{lead}So nothing will be archived.")
-            return
-
-        if not archive_directory_path.exists():
-            if print_progress:
-                print(f"{lead}Creating folder {archive_directory_path}")
-            os.mkdir(archive_directory_path)
-
-        archive_subdirectory_path = archive_directory_path / subdirectory_relative_path
-        if archive_subdirectory_path.exists():
-            if print_progress:
-                print(f"{lead}{archive_subdirectory_path} already exists. No action taken.")
-            return
-        else:
-            if print_progress:
-                print(f"{lead}Archiving {source_directory_path} to {archive_subdirectory_path}")
-            shutil.copytree(source_directory_path, archive_subdirectory_path)
-        pass
-
 
 if __name__ == "__main__":
     choices = "AAA BBB CCC DDD EEE".split()
-    import os
-    from pathlib import Path
     # choices = [Path(x).resolve().absolute() for x in os.listdir()][:5]
 
     result = IoUtility.get_user_choice(choices, allow_multiple=True, allow_empty=True, verify=True)
