@@ -1,20 +1,17 @@
-import copy
 import datetime
 import os
-from pathlib import Path
 import shutil
-from sys import prefix
-from typing import List, TypeVar, Dict
-
-import astropy.time
+from pathlib import Path
+from typing import List
+from typing import TypeVar
 
 
 class IoUtility:
-    _T = TypeVar('_T')
+    _T = TypeVar("_T")
 
     def get_user_choice(
         choices: List[_T],
-        prompt_message: str = f'Choose from the following',
+        prompt_message: str = f"Choose from the following",
         allow_multiple: bool = True,
         allow_empty: bool = True,
         verify: bool = True,
@@ -31,44 +28,49 @@ class IoUtility:
         Returns:
             List[_T]: The subset of "choices" selected by the user
         """
-        error_message = ''
+        error_message = ""
         selected_choices: List
         while True:
             # Give the user their options
-            print(f'\n{prompt_message}:')
+            print(f"\n{prompt_message}:")
             for index, choice in enumerate(choices):
-                print(f'  {(index + 1):3}. {choice}')
-            if error_message != '':
-                print(f'[{error_message}] ', end='')
+                print(f"  {(index + 1):3}. {choice}")
+            if error_message != "":
+                print(f"[{error_message}] ", end="")
             if allow_empty:
-                print(f'[Empty selection: ok] ', end='')
+                print(f"[Empty selection: ok] ", end="")
             else:
-                print(f'[Empty selection: NOT OK] ', end='')
+                print(f"[Empty selection: NOT OK] ", end="")
             if allow_multiple:
-                print(f'[Multiple selection: ok]')
+                print(f"[Multiple selection: ok]")
             else:
-                print(f'[Multiple selection: NOT OK]')
-            
+                print(f"[Multiple selection: NOT OK]")
 
             # Parse user index choices
-            user_input_raw = input(f'Enter choice(s), separated by spaces. Blank to select nothing, "all" to select everything: ')
-            if user_input_raw.strip() == '':
+            user_input_raw = input(
+                f'Enter choice(s), separated by spaces. Blank to select nothing, "all" to select everything: '
+            )
+            if user_input_raw.strip() == "":
                 selected_indexes = []
-            elif user_input_raw.strip().strip('"\'').casefold() == 'all':
+            elif user_input_raw.strip().strip("\"'").casefold() == "all":
                 selected_indexes = [x for x in range(len(choices))]
             else:
                 try:
                     selected_indexes = [int(x) - 1 for x in user_input_raw.split()]
                 except Exception as exc:
-                    error_message = f'Error parsing user choice(s): {exc}. Please try again.'
+                    error_message = f"Error parsing user choice(s): {exc}. Please try again."
                     continue
 
             # Make sure number of selections is valid
             if (not allow_empty) and len(selected_indexes) == 0:
-                error_message = f'You must select at least 1 option. You selected {len(selected_indexes)}. Please try again.'
+                error_message = (
+                    f"You must select at least 1 option. You selected {len(selected_indexes)}. Please try again."
+                )
                 continue
             if (not allow_multiple) and len(selected_indexes) > 1:
-                error_message = f'You must select exactly 1 option. You selected {len(selected_indexes)}. Please try again.'
+                error_message = (
+                    f"You must select exactly 1 option. You selected {len(selected_indexes)}. Please try again."
+                )
                 continue
 
             # Remove duplicates and sort in ascending order
@@ -86,7 +88,7 @@ class IoUtility:
                         raise IndexError
                     selected_choices.append(choices[index])
             except IndexError:
-                error_message = f'You selected an invalid index. Please try again.'
+                error_message = f"You selected an invalid index. Please try again."
                 continue
 
             # At this point, input is valid.
@@ -94,36 +96,33 @@ class IoUtility:
             if not verify:
                 break
 
-            print(f'\nYou selected {len(selected_indexes)} choice(s):')
+            print(f"\nYou selected {len(selected_indexes)} choice(s):")
             for index in selected_indexes:
-                print(f'  {(index + 1):3}. {choices[index]}')
-            user_input_verify = input(f'Is this correct? (y/n): ').strip().strip('"\'').casefold()
-            if user_input_verify == 'y' or user_input_verify == 'yes':
+                print(f"  {(index + 1):3}. {choices[index]}")
+            user_input_verify = input(f"Is this correct? (y/n): ").strip().strip("\"'").casefold()
+            if user_input_verify == "y" or user_input_verify == "yes":
                 break
-            elif user_input_verify == 'n' or user_input_verify == 'no':
-                error_message = f''
+            elif user_input_verify == "n" or user_input_verify == "no":
+                error_message = f""
             else:
-                error_message = f'Could not interpret yes/no input. Please try again.'
+                error_message = f"Could not interpret yes/no input. Please try again."
 
         return selected_choices
-    
+
     def get_user_choice_single(
         choices: List[_T],
-        prompt_message: str = f'Choose from the following',
+        prompt_message: str = f"Choose from the following",
         verify: bool = True,
     ) -> _T:
         return IoUtility.get_user_choice(
-            choices = choices,
-            prompt_message = prompt_message,
-            allow_multiple= False,
-            allow_empty = False,
-            verify = verify,
+            choices=choices,
+            prompt_message=prompt_message,
+            allow_multiple=False,
+            allow_empty=False,
+            verify=verify,
         )[0]
 
-    def prepare_for_mayo_scheme(
-        source_directory_path: Path,
-        paths_to_recreate: List[Path] = []
-    ) -> None:
+    def prepare_for_mayo_scheme(source_directory_path: Path, paths_to_recreate: List[Path] = []) -> None:
         """WARNING: This will delete the given path!!!
         Prepare a directory to be archived using "The Mayo Scheme", where archiving is done by initial creation date
         So ./source_path/ is archived to ./archive_path/2022-09-23T13_13_41/
@@ -138,25 +137,21 @@ class IoUtility:
             shutil.rmtree(source_directory_path)
 
         # Re-make the path (that was just deleted)
-        if not source_directory_path.exists():     
+        if not source_directory_path.exists():
             os.mkdir(source_directory_path)
 
         for path in paths_to_recreate:
-            if not path.exists():     
+            if not path.exists():
                 os.mkdir(path)
 
-
         # Save the report run time
-        current_report_creation_time_path = source_directory_path / 'report_creation_time.txt'
-        current_time_string = datetime.datetime.now().strftime('%Y-%m-%dT%H_%M_%S')
-        with open(current_report_creation_time_path, 'w') as file:
+        current_report_creation_time_path = source_directory_path / "report_creation_time.txt"
+        current_time_string = datetime.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
+        with open(current_report_creation_time_path, "w") as file:
             file.write(current_time_string)
 
     def archive_with_mayo_scheme(
-        source_directory_path: Path,
-        archive_directory_path: Path,
-        lead_text: str = '',
-        print_progress: bool = True
+        source_directory_path: Path, archive_directory_path: Path, lead_text: str = "", print_progress: bool = True
     ) -> None:
         """Archive using "The Mayo Scheme", where archiving is done by initial creation date
         So ./source_path/ is archived to ./archive_path/2022-09-23T13_13_41/
@@ -168,27 +163,27 @@ class IoUtility:
         """
 
         # Get the date in the format 2022-09-23T13_13_41
-        report_creation_path: Path = source_directory_path / 'report_creation_time.txt'
+        report_creation_path: Path = source_directory_path / "report_creation_time.txt"
         if report_creation_path.exists():
-            with open(report_creation_path, 'r') as file:
+            with open(report_creation_path, "r") as file:
                 folder_name = file.readline().strip()
         else:
-            folder_name = datetime.datetime.now().strftime('%Y-%m-%dT%H_%M_%S')
-        
+            folder_name = datetime.datetime.now().strftime("%Y-%m-%dT%H_%M_%S")
+
         IoUtility.archive_folder(
-            source_directory_path = source_directory_path,
-            archive_directory_path = archive_directory_path,
-            subdirectory_relative_path = folder_name,
-            lead_text = lead_text,
-            print_progress = print_progress
+            source_directory_path=source_directory_path,
+            archive_directory_path=archive_directory_path,
+            subdirectory_relative_path=folder_name,
+            lead_text=lead_text,
+            print_progress=print_progress,
         )
 
     def archive_folder(
         source_directory_path: Path,
         archive_directory_path: Path,
-        subdirectory_relative_path: str = '.',
-        lead_text: str = '',
-        print_progress: bool = True
+        subdirectory_relative_path: str = ".",
+        lead_text: str = "",
+        print_progress: bool = True,
     ) -> None:
         """Archive a folder recursively
 
@@ -199,36 +194,36 @@ class IoUtility:
             lead_text (str, optional): _description_. Defaults to ''.
             print_progress (bool, optional): _description_. Defaults to True.
         """
-        if lead_text != '':
-            lead = f'[{lead_text}] '
+        if lead_text != "":
+            lead = f"[{lead_text}] "
         else:
-            lead = ''
+            lead = ""
 
         if not source_directory_path.exists():
             if print_progress:
-                print(f'{lead}Could not find directory {source_directory_path}')
-                print(f'{lead}So nothing will be archived.')
+                print(f"{lead}Could not find directory {source_directory_path}")
+                print(f"{lead}So nothing will be archived.")
             return
-        
+
         if not archive_directory_path.exists():
             if print_progress:
-                print(f'{lead}Creating folder {archive_directory_path}')
+                print(f"{lead}Creating folder {archive_directory_path}")
             os.mkdir(archive_directory_path)
-        
+
         archive_subdirectory_path = archive_directory_path / subdirectory_relative_path
         if archive_subdirectory_path.exists():
             if print_progress:
-                print(f'{lead}{archive_subdirectory_path} already exists. No action taken.')
+                print(f"{lead}{archive_subdirectory_path} already exists. No action taken.")
             return
         else:
             if print_progress:
-                print(f'{lead}Archiving {source_directory_path} to {archive_subdirectory_path}')
+                print(f"{lead}Archiving {source_directory_path} to {archive_subdirectory_path}")
             shutil.copytree(source_directory_path, archive_subdirectory_path)
         pass
 
 
-if __name__ == '__main__':
-    choices = 'AAA BBB CCC DDD EEE'.split()
+if __name__ == "__main__":
+    choices = "AAA BBB CCC DDD EEE".split()
     import os
     from pathlib import Path
     # choices = [Path(x).resolve().absolute() for x in os.listdir()][:5]
