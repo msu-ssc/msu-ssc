@@ -40,3 +40,6 @@ Add `prompt_util` module
 
 ### 0.5.0 - 2025-03-27
 Prep for PyPI release
+
+### 0.6.0 - 2025-03-27
+Use GitHub action to publish to TestPyPI
