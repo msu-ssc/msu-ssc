@@ -7,6 +7,7 @@ from typing import TypeVar
 
 _T = TypeVar("_T")
 
+
 def get_user_choices(
     choices: List[_T],
     prompt_message: str = f"Choose from the following",
@@ -66,9 +67,7 @@ def get_user_choices(
             )
             continue
         if (not allow_multiple) and len(selected_indexes) > 1:
-            error_message = (
-                f"You must select exactly 1 option. You selected {len(selected_indexes)}. Please try again."
-            )
+            error_message = f"You must select exactly 1 option. You selected {len(selected_indexes)}. Please try again."
             continue
 
         # Remove duplicates and sort in ascending order
@@ -106,6 +105,7 @@ def get_user_choices(
             error_message = f"Could not interpret yes/no input. Please try again."
 
     return selected_choices
+
 
 def get_user_choice_single(
     choices: List[_T],

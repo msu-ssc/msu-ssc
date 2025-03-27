@@ -7,12 +7,10 @@ from typing import Union
 if sys.version_info >= (3, 8):
     from typing import Literal
 
-    TimespecType = Literal[
-        "auto", "hours", "minutes", "seconds", "milliseconds", "microseconds"
-    ]
+    TimespecType = Literal["auto", "hours", "minutes", "seconds", "milliseconds", "microseconds"]
 else:
     TimespecType = str
-    
+
 _chunk_regex = re.compile(r"[^a-zA-Z0-9\-_\.]+")
 
 
@@ -66,9 +64,7 @@ def file_timestamp(
         if assume_utc and assume_local:
             raise ValueError("Cannot assume both UTC and local time")
         elif not assume_utc and not assume_local:
-            raise ValueError(
-                "Must assume either UTC or local time if timestamp is naive"
-            )
+            raise ValueError("Must assume either UTC or local time if timestamp is naive")
         if assume_utc:
             timestamp = timestamp.replace(tzinfo=datetime.timezone.utc)
         elif assume_local:
