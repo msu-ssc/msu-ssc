@@ -8,23 +8,36 @@ dependencies = [
     "python-json-logger>=3.0.1",
     "rich>=13.8.1",
 ]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = [ "LICENSE" ]
 authors = [
-    {name = "David Mayo", email = "dcmayo@moreheadstate.edu>"},
+    {name = "David Mayo", email = "dcmayo@moreheadstate.edu"},
 ]
 
 [project.urls]
 homepage = "https://github.com/msu-ssc/msu-ssc"
 
 
+# [build-system]
+# requires = ["pdm-backend"]
+# build-backend = "pdm.backend"
+
+
+# [tool.pdm.version]
+# source = "scm"
+# fallback_version = "0.0.0"
+
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["setuptools>=61", "setuptools_scm[toml]>=6.3.2"]
+build-backend = "setuptools.build_meta"
 
-
-[tool.pdm.version]
-source = "scm"
+[tool.setuptools_scm]
+# write_to = "src/blah2/_version.py"
+# version_file = "src/blah2/_version.txt"
+version_scheme = "only-version"
+local_scheme = "no-local-version"
 fallback_version = "0.0.0"
+tag_regex = "^(\\d+\\.\\d+\\.\\d+)$"
 
 [dependency-groups]
 dev = [
