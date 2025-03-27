@@ -25,7 +25,7 @@ def test_file_timestamp():
     # timestamp_naive = datetime.datetime(2025, 1, 15)
 
     # Get _tzinfo.   https://stackoverflow.com/a/39079819
-    local_timezone: datetime.timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+    local_timezone: datetime.timezone = timestamp_naive.astimezone().tzinfo
     utcoffset = local_timezone.utcoffset(timestamp_naive)
     simple_timestamp_naive_plus_offset = timestamp_naive - utcoffset
     manually_converted_to_utc = simple_timestamp_naive_plus_offset.replace(tzinfo=datetime.timezone.utc)

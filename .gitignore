@@ -1,6 +1,7 @@
 **/.vscode/
 temp/
 **/.pdm-build/
+**/logs/
 
 # Python-generated files
 __pycache__/
