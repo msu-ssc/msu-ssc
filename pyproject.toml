@@ -1,11 +1,21 @@
 [project]
 name = "msu-ssc"
 dynamic = ["version"]
-# version = "0.1.0"
-description = "Add your description here"
+description = "Morehead State University Space Science Center utilities"
 readme = "README.md"
 requires-python = ">=3.7"
-dependencies = []
+dependencies = [
+    "python-json-logger>=3.0.1",
+    "rich>=13.8.1",
+]
+license = { file = "LICENSE" }
+authors = [
+    {name = "David Mayo", email = "dcmayo@moreheadstate.edu>"},
+]
+
+[project.urls]
+homepage = "https://github.com/msu-ssc/msu-ssc"
+
 
 [build-system]
 requires = ["pdm-backend"]
@@ -14,21 +24,13 @@ build-backend = "pdm.backend"
 
 [tool.pdm.version]
 source = "scm"
-fallback_version = "0.55.55"
+fallback_version = "0.0.0"
 
 [dependency-groups]
 dev = [
     "freezegun>=1.5.1",
     "pytest>=7.4.4",
     "ruff>=0.9.5",
-]
-
-[project.optional-dependencies]
-pretty = [
-    "rich>=13.8.1",
-]
-logging = [
-    "python-json-logger>=3.0.1",
 ]
 
 [tool.ruff]
@@ -39,7 +41,7 @@ ignore = [
     "F541", # f-string without any placeholders
 ]
 extend-select = [
-    "I001",
+    "I001", # isort unsorted-imports
 ]
 
 [tool.ruff.lint.isort]

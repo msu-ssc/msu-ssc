@@ -2,9 +2,6 @@
 
 Various Python tools for the Morehead State University (MSU) Space Science Center (SSC). This repo is owned by [David Mayo](https://github.com/davidmayo).
 
-> [!IMPORTANT]  
-> Remember, CUI/ITAR/etc. data (including code/config files/design docs) does not belong on GitHub at all.
-
 ## Usage
 
 Tools are written and tested in Linux (Ubuntu) with Python 3.10. More details on all this forthcoming.
@@ -40,3 +37,6 @@ Allow compatibility with Python 3.7 through Python 3.13
 
 ### 0.4.0 - 2025-02-11
 Add `prompt_util` module
+
+### 0.5.0 - 2025-03-27
+Prep for PyPI release
