@@ -6,7 +6,8 @@ from typing import Union
 
 if sys.version_info >= (3, 8):
     from typing import Literal
-    TimespecType = Literal["auto","hours","minutes","seconds","milliseconds","microseconds"]
+
+    TimespecType = Literal["auto", "hours", "minutes", "seconds", "milliseconds", "microseconds"]
 else:
     TimespecType = str
 
@@ -21,6 +22,7 @@ except ImportError:
     _rich_imported = False
 
 logger = logging.getLogger("ssc")
+"""The primary logger. It will have the name `ssc`. Use `ssc_log.init()` to configure."""
 
 
 def utc_filename_timestamp(
@@ -33,6 +35,21 @@ def utc_filename_timestamp(
     assume_utc=False,
     assume_local=False,
 ) -> str:
+    """Generate a filename with a UTC timestamp.
+
+    With all defaults, will give a filename like `2025-02-03T12_34_56.log`
+
+    To make a `equipment_2025-02-03T12_34_56.789_log.txt`, you would call:
+
+    ```
+    filename = utc_filename_timestamp(
+        prefix="equipment",
+        suffix="log",
+        extension=".txt",
+        timespec="milliseconds",
+    )
+    ```
+    """
     timestamp_string = file_timestamp(
         timestamp=timestamp,
         sep="T",
@@ -44,34 +61,6 @@ def utc_filename_timestamp(
     if not extension.startswith("."):
         extension = "." + extension
     return clean_path_part("_".join(x for x in (prefix, timestamp_string, suffix) if x) + extension)
-
-
-def init(
-    level: Union[str, None] = None,
-    *,
-    plain_text_file_path: Union[Path, str, None] = None,
-    jsonl_file_path: Union[Path, str, None] = None,
-    plain_text_level: Union[str, None] = None,
-    jsonl_level: Union[str, None] = None,
-) -> None:
-    if level:
-        logger.setLevel(level.upper())
-    else:
-        logger.setLevel("DEBUG")
-
-    if plain_text_file_path:
-        plain_text_level = plain_text_level or level
-        _log_to_file(
-            plain_text_file_path,
-            level=plain_text_level,
-        )
-
-    if jsonl_file_path:
-        jsonl_level = jsonl_level or level
-        _log_to_jsonl_file(
-            jsonl_file_path,
-            level=jsonl_level,
-        )
 
 
 # logger.setLevel("DEBUG")
@@ -102,7 +91,38 @@ else:
     console_handler.setLevel("DEBUG")
     console_handler.setFormatter(plain_text_formatter)
 
-logger.addHandler(console_handler)
+
+def init(
+    level: Union[str, None] = "INFO",
+    *,
+    plain_text_file_path: Union[Path, str, None] = None,
+    jsonl_file_path: Union[Path, str, None] = None,
+    plain_text_level: Union[str, None] = None,
+    jsonl_level: Union[str, None] = None,
+    console_level: Union[str, None] = None,
+) -> None:
+    if level:
+        logger.setLevel(level.upper())
+
+    if plain_text_file_path:
+        plain_text_level = plain_text_level or level
+        _log_to_file(
+            plain_text_file_path,
+            level=plain_text_level,
+        )
+
+    if jsonl_file_path:
+        jsonl_level = jsonl_level or level
+        _log_to_jsonl_file(
+            jsonl_file_path,
+            level=jsonl_level,
+        )
+
+    console_level = console_level or level
+    console_handler.setLevel(console_level)
+    logger.addHandler(console_handler)
+
+
 DEFAULT_LOG_DIRECTORY = Path(__file__).expanduser().resolve().parent.parent / "logs"
 """Should be `./logs/`"""
 
@@ -122,6 +142,8 @@ def log_to_default_file() -> None:
 def _log_to_file(
     path: Union[Path, str],
     level: Union[str, None] = None,
+    *,
+    encoding: str | None = "utf-8",
 ) -> None:
     """Begin logging in plaintext to the given file. File will be APPENDED, and encoded in UTF-8"""
     resolved_path = Path(path).expanduser().resolve()
@@ -131,7 +153,10 @@ def _log_to_file(
             exist_ok=True,
         )
 
-    file_handler = logging.FileHandler(filename=Path(resolved_path).expanduser().resolve())
+    file_handler = logging.FileHandler(
+        filename=Path(resolved_path).expanduser().resolve(),
+        encoding=encoding,
+    )
 
     if level:
         file_handler.setLevel(level)
@@ -150,7 +175,7 @@ def _log_to_jsonl_file(
         # from pythonjsonlogger.json import JsonFormatter
     except ImportError:
         logger.error("pythonjsonlogger is not installed. Please install it to use JSON logging.")
-        return
+        raise
 
     resolved_path = Path(path).expanduser().resolve()
     if not resolved_path.parent.exists():
