@@ -44,5 +44,11 @@ Prep for PyPI release
 ### 0.6.0 - 2025-03-27
 Use GitHub action to publish to TestPyPI
 
-## 1.0.0 - 2025-03-27
+### 1.0.0 - 2025-03-27
 First official release!
+
+### 2.0.0 - 2026-01-29
+Replace log console timestamp with more concise version
+
+### 2.0.1 - 2026-01-29
+Add release notes that were mistakenly not included
