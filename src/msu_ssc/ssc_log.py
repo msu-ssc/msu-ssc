@@ -65,6 +65,11 @@ def utc_filename_timestamp(
 
 # logger.setLevel("DEBUG")
 
+console_plain_text_formatter = logging.Formatter(
+    fmt="[%(asctime)s.%(msecs)03d %(levelname)-8s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+
 plain_text_formatter = logging.Formatter(
     fmt="[%(asctime)s.%(msecs)03d %(levelname)-8s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -72,9 +77,7 @@ plain_text_formatter = logging.Formatter(
 
 
 def _iso_str(timestamp: "datetime.datetime") -> str:
-    string = f"{timestamp:%Y-%m-%d %H:%M:%S.%f}"
-    milliseconds_string = string[:-3]
-    return f"[{milliseconds_string}]"
+    return f"{timestamp:%H:%M:%S.%f}"[:-3]
 
 
 if _rich_imported:
@@ -89,7 +92,7 @@ if _rich_imported:
 else:
     console_handler = logging.StreamHandler()
     console_handler.setLevel("DEBUG")
-    console_handler.setFormatter(plain_text_formatter)
+    console_handler.setFormatter(console_plain_text_formatter)
 
 
 def init(
@@ -100,6 +103,7 @@ def init(
     plain_text_level: Union[str, None] = None,
     jsonl_level: Union[str, None] = None,
     console_level: Union[str, None] = None,
+    console_: str = "%Y-%m-%d %H:%M:%S.%f",
 ) -> None:
     if level:
         logger.setLevel(level.upper())
